@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('编辑图书')"></head>
+<body>
+    <nav th:replace="fragments/layout :: navbar"></nav>
+
+    <div class="main-content">
+        <div class="container" style="max-width:600px;">
+            <div class="page-header">
+                <h1>✏️ 编辑图书</h1>
+            </div>
+
+            <form action="/book/doEdit" method="post" enctype="multipart/form-data" class="card">
+                <div class="card-body">
+                    <input type="hidden" name="id" th:value="${book.id}">
+                    <div class="form-group">
+                        <label>书名 *</label>
+                        <input type="text" name="title" class="form-control" th:value="${book.title}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>作者 *</label>
+                        <input type="text" name="author" class="form-control" th:value="${book.author}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ISBN</label>
+                        <input type="text" name="isbn" class="form-control" th:value="${book.isbn}">
+                    </div>
+                    <div class="form-group">
+                        <label>出版社</label>
+                        <input type="text" name="publisher" class="form-control" th:value="${book.publisher}">
+                    </div>
+                    <div class="form-group">
+                        <label>分类</label>
+                        <select name="categoryId" class="form-control">
+                            <option value="">-- 请选择 --</option>
+                            <option th:each="cat : ${categories}" th:value="${cat.id}"
+                                    th:text="${cat.name}" th:selected="${cat.id == book.categoryId}"></option>
+                        </select>
+                    </div>
+                    <!-- 封面图片上传 -->
+                    <div class="form-group">
+                        <label>封面图片</label>
+                        <div class="cover-upload">
+                            <div class="cover-preview"
+                                 th:classappend="${book.coverUrl != null} ? 'has-image'"
+                                 id="coverPreview">
+                                <img th:if="${book.coverUrl != null}"
+                                     th:src="${book.coverUrl}" alt="当前封面">
+                                <div th:unless="${book.coverUrl != null}" class="placeholder">
+                                    <span class="icon">📷</span>
+                                    <span>暂无封面</span>
+                                </div>
+                            </div>
+                            <div class="cover-file-input">
+                                <input type="file" name="coverImage" accept="image/*"
+                                       onchange="previewCover(this)">
+                                <span class="hint" th:if="${book.coverUrl != null}">
+                                    不选择文件则保留原封面
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>总册数</label>
+                        <input type="number" name="totalCopies" class="form-control" th:value="${book.totalCopies}" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>馆藏位置</label>
+                        <input type="text" name="location" class="form-control" th:value="${book.location}">
+                    </div>
+                    <div class="form-group">
+                        <label>图书简介</label>
+                        <textarea name="description" class="form-control" rows="4" th:text="${book.description}"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;">保存修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:replace="fragments/layout :: chatbot"></div>
+    <footer th:replace="fragments/layout :: footer"></footer>
+
+    <script>
+        function previewCover(input) {
+            var preview = document.getElementById('coverPreview');
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = '<img src="' + e.target.result + '" alt="封面预览">';
+                    preview.classList.add('has-image');
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                // 恢复原有封面或占位符
+                preview.innerHTML = preview.getAttribute('data-original') || '<div class="placeholder"><span class="icon">📷</span><span>暂无封面</span></div>';
+                preview.classList.remove('has-image');
+            }
+        }
+        // 保存原始封面HTML以便恢复
+        (function() {
+            var preview = document.getElementById('coverPreview');
+            preview.setAttribute('data-original', preview.innerHTML);
+        })();
+    </script>
+</body>
+</html>

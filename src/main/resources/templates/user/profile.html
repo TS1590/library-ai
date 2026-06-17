@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('个人中心')"></head>
+<body>
+    <nav th:replace="fragments/layout :: navbar"></nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>👤 个人中心</h1>
+            </div>
+
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+            <div style="display:grid;grid-template-columns:1fr 2fr;gap:20px;">
+                <!-- 左侧：个人信息 -->
+                <div class="card">
+                    <div class="card-body">
+                        <h3>个人信息</h3>
+                        <form action="/user/updateProfile" method="post" style="margin-top:16px;">
+                            <div class="form-group">
+                                <label>用户名</label>
+                                <input type="text" class="form-control" th:value="${session.loginUser.username}" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>真实姓名</label>
+                                <input type="text" name="realName" class="form-control"
+                                       th:value="${session.loginUser.realName}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>手机号</label>
+                                <input type="text" name="phone" class="form-control"
+                                       th:value="${session.loginUser.phone}">
+                            </div>
+                            <div class="form-group">
+                                <label>邮箱</label>
+                                <input type="email" name="email" class="form-control"
+                                       th:value="${session.loginUser.email}">
+                            </div>
+                            <button type="submit" class="btn btn-primary">保存修改</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 右侧：借阅记录 + 密码修改 -->
+                <div>
+                    <!-- 借阅记录 -->
+                    <div class="card" style="margin-bottom:20px;">
+                        <div class="card-body">
+                            <h3>📚 我的借阅</h3>
+                            <div th:if="${borrows == null or borrows.isEmpty()}" style="padding:20px;text-align:center;color:#888;">
+                                暂无借阅记录
+                            </div>
+                            <table th:if="${borrows != null and !borrows.isEmpty()}" style="margin-top:12px;">
+                                <thead>
+                                    <tr>
+                                        <th>图书</th>
+                                        <th>借阅时间</th>
+                                        <th>应还时间</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="b : ${borrows}">
+                                        <td th:text="${b.bookTitle} + ' / ' + ${b.bookAuthor}">书名</td>
+                                        <td th:text="${#temporals.format(b.borrowTime, 'yyyy-MM-dd')}">借阅时间</td>
+                                        <td th:text="${#temporals.format(b.dueTime, 'yyyy-MM-dd')}">到期</td>
+                                        <td>
+                                            <span th:if="${b.returnTime != null}" class="tag">已归还</span>
+                                            <span th:if="${b.returnTime == null and !b.isOverdue()}" class="tag tag-success">借阅中</span>
+                                            <span th:if="${b.returnTime == null and b.isOverdue()}" class="tag tag-danger">逾期</span>
+                                        </td>
+                                        <td>
+                                            <button th:if="${b.returnTime == null}" class="btn btn-success btn-sm"
+                                                    onclick="returnBook([[${b.id}]])">归还</button>
+                                            <button th:if="${b.returnTime == null and b.renewCount < 2}"
+                                                    class="btn btn-warning btn-sm"
+                                                    onclick="renewBook([[${b.id}]])">续借</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 修改密码 -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h3>🔒 修改密码</h3>
+                            <form action="/user/changePassword" method="post" style="margin-top:16px;">
+                                <div class="form-group">
+                                    <label>原密码</label>
+                                    <input type="password" name="oldPassword" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>新密码</label>
+                                    <input type="password" name="newPassword" class="form-control"
+                                           required minlength="6" placeholder="至少6位">
+                                </div>
+                                <button type="submit" class="btn btn-warning">修改密码</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/layout :: chatbot"></div>
+    <footer th:replace="fragments/layout :: footer"></footer>
+
+    <script>
+        function returnBook(borrowId) {
+            if (!confirm('确认归还此书？')) return;
+            fetch('/book/return', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'borrowId=' + borrowId
+            })
+            .then(r => r.json())
+            .then(data => { alert(data.message); if (data.success) location.reload(); });
+        }
+
+        function renewBook(borrowId) {
+            if (!confirm('确认续借此书（延长30天）？')) return;
+            fetch('/book/renew', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'borrowId=' + borrowId
+            })
+            .then(r => r.json())
+            .then(data => { alert(data.message); if (data.success) location.reload(); });
+        }
+    </script>
+</body>
+</html>

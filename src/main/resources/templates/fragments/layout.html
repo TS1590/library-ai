@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' - 校园图书馆'">校园图书管理系统</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/chatbot.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav th:fragment="navbar" class="navbar">
+        <div class="container nav-container">
+            <a href="/" class="nav-brand">📚 校园图书馆</a>
+            <div class="nav-links">
+                <a href="/books">图书浏览</a>
+                <a href="/ai/recommend" th:if="${session.loginUser != null}">🤖 AI推荐</a>
+                <th:block th:if="${session.loginUser == null}">
+                    <a href="/login" class="btn btn-outline">登录</a>
+                    <a href="/register" class="btn btn-primary">注册</a>
+                </th:block>
+                <th:block th:if="${session.loginUser != null}">
+                    <div class="nav-user-dropdown">
+                        <span class="nav-username" th:text="${session.loginUser.realName} ?: ${session.loginUser.username}">用户名</span>
+                        <div class="dropdown-menu">
+                            <a href="/user/profile">个人中心</a>
+                            <a href="/ai/recommend">AI推荐</a>
+                            <th:block th:if="${session.loginUser.isAdmin()}">
+                                <hr>
+                                <a href="/admin/dashboard">管理后台</a>
+                            </th:block>
+                            <hr>
+                            <a href="/logout">退出登录</a>
+                        </div>
+                    </div>
+                </th:block>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页脚 -->
+    <footer th:fragment="footer" class="footer">
+        <div class="container">
+            <p>© 2025 校园图书管理系统 | Web后端技术 期末项目</p>
+            <p>Powered by Spring Boot + Thymeleaf</p>
+        </div>
+    </footer>
+
+    <!-- 聊天机器人组件 - 所有页面可见，未登录时提示登录 -->
+    <div th:fragment="chatbot">
+        <div th:replace="fragments/chatbot :: chatbot-widget"></div>
+    </div>
+</body>
+</html>

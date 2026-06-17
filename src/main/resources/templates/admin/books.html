@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('图书管理')"></head>
+<body>
+    <nav th:replace="fragments/layout :: navbar"></nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+                <h1>📖 图书管理</h1>
+                <a href="/book/add" class="btn btn-primary">+ 添加图书</a>
+            </div>
+
+            <div th:if="${page == null or page.records == null or page.records.isEmpty()}" style="text-align:center;padding:60px;color:#888;">
+                📭 暂无图书，请添加
+            </div>
+
+            <div class="table-container" th:if="${page != null and page.records != null and !page.records.isEmpty()}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>书名</th>
+                            <th>作者</th>
+                            <th>分类</th>
+                            <th>库存</th>
+                            <th>状态</th>
+                            <th>位置</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="book : ${page.records}">
+                            <td th:text="${book.id}">1</td>
+                            <td th:text="${book.title}">书名</td>
+                            <td th:text="${book.author}">作者</td>
+                            <td th:text="${book.categoryName} ?: '-'">分类</td>
+                            <td>
+                                <span th:text="${book.availableCopies} + '/' + ${book.totalCopies}">5/5</span>
+                            </td>
+                            <td>
+                                <span th:if="${book.status == 1}" class="tag tag-success">在架</span>
+                                <span th:unless="${book.status == 1}" class="tag tag-danger">已下架</span>
+                            </td>
+                            <td th:text="${book.location} ?: '-'">位置</td>
+                            <td>
+                                <a th:href="@{/book/edit/{id}(id=${book.id})}" class="btn btn-sm btn-primary">编辑</a>
+                                <a th:href="@{/book/delete/{id}(id=${book.id})}" class="btn btn-sm btn-danger"
+                                   onclick="return confirm('确认下架此书？')">下架</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- 分页导航 -->
+                <div class="pagination" style="display:flex;justify-content:center;align-items:center;gap:16px;padding:16px 0;">
+                    <a th:if="${page.current > 1}"
+                       th:href="@{/admin/books(page=${page.current - 1}, size=${page.size})}"
+                       class="btn btn-outline">← 上一页</a>
+                    <span th:unless="${page.current > 1}" class="btn btn-outline" style="opacity:0.4;pointer-events:none;">← 上一页</span>
+
+                    <span style="color:#666;">
+                        第 <strong th:text="${page.current}">1</strong> / <strong th:text="${page.pages}">1</strong> 页
+                        （共 <strong th:text="${page.total}">0</strong> 条）
+                    </span>
+
+                    <a th:if="${page.current < page.pages}"
+                       th:href="@{/admin/books(page=${page.current + 1}, size=${page.size})}"
+                       class="btn btn-outline">下一页 →</a>
+                    <span th:unless="${page.current < page.pages}" class="btn btn-outline" style="opacity:0.4;pointer-events:none;">下一页 →</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/layout :: chatbot"></div>
+    <footer th:replace="fragments/layout :: footer"></footer>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('管理后台')"></head>
+<body>
+    <nav th:replace="fragments/layout :: navbar"></nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>🛠️ 管理后台</h1>
+            </div>
+
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            <div th:if="${dbError}" class="alert alert-danger" th:text="${dbError}"></div>
+
+            <!-- 统计面板 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" th:text="${totalBooks}">0</div>
+                    <div class="stat-label">馆藏图书</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" th:text="${totalReaders}">0</div>
+                    <div class="stat-label">注册读者</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" th:text="${borrowingCount}">0</div>
+                    <div class="stat-label">借阅中</div>
+                </div>
+            </div>
+
+            <!-- 快捷入口 -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+                <a href="/admin/books" class="card" style="padding:24px;text-align:center;text-decoration:none;">
+                    <div style="font-size:2rem;">📖</div>
+                    <div style="font-weight:600;margin-top:8px;">图书管理</div>
+                </a>
+                <a href="/admin/users" class="card" style="padding:24px;text-align:center;text-decoration:none;">
+                    <div style="font-size:2rem;">👥</div>
+                    <div style="font-weight:600;margin-top:8px;">用户管理</div>
+                </a>
+                <a href="/admin/borrows" class="card" style="padding:24px;text-align:center;text-decoration:none;">
+                    <div style="font-size:2rem;">📋</div>
+                    <div style="font-weight:600;margin-top:8px;">借阅记录</div>
+                </a>
+                <a href="/admin/categories" class="card" style="padding:24px;text-align:center;text-decoration:none;">
+                    <div style="font-size:2rem;">🏷️</div>
+                    <div style="font-weight:600;margin-top:8px;">分类管理</div>
+                </a>
+            </div>
+
+            <!-- 最近借阅记录 -->
+            <div class="card">
+                <div class="card-body">
+                    <h3>📋 最近借阅记录</h3>
+                    <table style="margin-top:12px;" th:if="${recentBorrows != null and !recentBorrows.isEmpty()}">
+                        <thead>
+                            <tr>
+                                <th>读者</th>
+                                <th>图书</th>
+                                <th>借阅时间</th>
+                                <th>应还时间</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="b : ${recentBorrows}">
+                                <td th:text="${b.userRealName} + '(' + ${b.username} + ')'">读者</td>
+                                <td th:text="${b.bookTitle}">图书</td>
+                                <td th:text="${#temporals.format(b.borrowTime, 'MM-dd HH:mm')}">借阅</td>
+                                <td th:text="${#temporals.format(b.dueTime, 'yyyy-MM-dd')}">应还</td>
+                                <td>
+                                    <span th:if="${b.returnTime != null}" class="tag">已归还</span>
+                                    <span th:if="${b.returnTime == null}" class="tag tag-warning">借阅中</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p th:if="${recentBorrows == null or recentBorrows.isEmpty()}" style="padding:20px;text-align:center;color:#888;">
+                        暂无借阅记录
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/layout :: chatbot"></div>
+    <footer th:replace="fragments/layout :: footer"></footer>
+</body>
+</html>

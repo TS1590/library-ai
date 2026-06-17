@@ -1,0 +1,140 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head(${book.title})"></head>
+<body>
+    <nav th:replace="fragments/layout :: navbar"></nav>
+
+    <div class="main-content">
+        <div class="container">
+            <!-- 图书基本信息 -->
+            <div class="detail-header">
+                <div class="detail-cover">
+                    <img th:if="${book.coverUrl}" th:src="${book.coverUrl}" th:alt="${book.title}">
+                    <span th:unless="${book.coverUrl}">📖</span>
+                </div>
+                <div class="detail-info">
+                    <h1 th:text="${book.title}">书名</h1>
+                    <p>📝 作者：<strong th:text="${book.author} ?: '未知'">作者</strong></p>
+                    <p>🏢 出版社：<span th:text="${book.publisher} ?: '未知'">出版社</span></p>
+                    <p>📂 分类：<span th:text="${book.categoryName} ?: '未分类'">分类</span></p>
+                    <p th:if="${book.isbn}">🔢 ISBN：<span th:text="${book.isbn}">ISBN</span></p>
+                    <p>📍 馆藏位置：<span th:text="${book.location} ?: '未指定'">位置</span></p>
+                    <p>
+                        📊 库存：
+                        <span th:class="${book.availableCopies > 0} ? 'tag tag-success' : 'tag tag-danger'">
+                            可借 <span th:text="${book.availableCopies}">0</span> / 共 <span th:text="${book.totalCopies}">0</span> 册
+                        </span>
+                    </p>
+
+                    <!-- 借阅/归还按钮 -->
+                    <div style="margin-top:20px;">
+                        <th:block th:if="${session.loginUser != null}">
+                            <th:block th:if="${!session.loginUser.isAdmin()}">
+                                <button th:if="${book.availableCopies > 0 and !hasBorrowed}"
+                                        class="btn btn-primary" onclick="borrowBook()">
+                                    📥 借阅此书
+                                </button>
+                                <span th:if="${hasBorrowed}" class="tag tag-success">
+                                    ✅ 您已借阅此书
+                                </span>
+                                <span th:if="${book.availableCopies <= 0}" class="tag tag-danger">
+                                    ❌ 暂时无货
+                                </span>
+                            </th:block>
+                        </th:block>
+                        <th:block th:if="${session.loginUser == null}">
+                            <a href="/login" class="btn btn-primary">登录后借阅</a>
+                        </th:block>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图书简介 -->
+            <div class="card" style="margin-bottom:24px;">
+                <div class="card-body">
+                    <h3>📖 图书简介</h3>
+                    <p style="margin-top:8px;color:#555;" th:text="${book.description} ?: '暂无简介'">简介</p>
+                </div>
+            </div>
+
+            <!-- AI图书分析 -->
+            <div class="ai-section" id="ai-analysis-section">
+                <h3>🤖 AI智能分析</h3>
+                <div id="ai-analysis-content">
+                    <button class="btn btn-primary btn-sm" onclick="loadAIAnalysis()">
+                        ✨ 生成AI分析
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI推荐 -->
+            <div th:if="${aiRecommendations != null and !aiRecommendations.isEmpty()}" class="ai-section">
+                <h3>🤖 你可能也喜欢</h3>
+                <div class="book-grid">
+                    <div th:each="rec : ${aiRecommendations}" class="book-card">
+                        <a th:href="@{/book/detail(id=${rec.bookId})}">
+                            <div class="book-cover">
+                                <img th:if="${rec.bookCoverUrl}" th:src="${rec.bookCoverUrl}" th:alt="${rec.bookTitle}">
+                                <span th:unless="${rec.bookCoverUrl}">📖</span>
+                            </div>
+                            <div class="book-info">
+                                <h3 th:text="${rec.bookTitle}">书名</h3>
+                                <p class="ai-reason" th:text="${rec.reason}">推荐理由</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/layout :: chatbot"></div>
+    <footer th:replace="fragments/layout :: footer"></footer>
+
+    <script>
+        // 借阅图书
+        function borrowBook() {
+            if (!confirm('确认借阅《' + document.querySelector('h1').textContent + '》？')) return;
+
+            fetch('/book/borrow', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'bookId=' + new URLSearchParams(window.location.search).get('id')
+            })
+            .then(r => r.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) location.reload();
+            });
+        }
+
+        // 加载AI分析
+        function loadAIAnalysis() {
+            var container = document.getElementById('ai-analysis-content');
+            container.innerHTML = '<div class="loading"></div> AI正在分析中...';
+
+            var bookId = new URLSearchParams(window.location.search).get('id');
+            fetch('/ai/analyze-book/' + bookId)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        var tagsHtml = data.tags.map(t =>
+                            '<span class="tag">' + t + '</span>'
+                        ).join(' ');
+
+                        container.innerHTML =
+                            '<p style="margin-bottom:12px;"><strong>📝 AI摘要：</strong>' + data.summary + '</p>' +
+                            '<p style="margin-bottom:12px;"><strong>🏷️ 标签：</strong>' + tagsHtml + '</p>' +
+                            '<p style="margin-bottom:8px;"><strong>👥 适合读者：</strong>' + data.targetReaders + '</p>' +
+                            '<p><strong>📊 难度等级：</strong>' + data.difficulty + '</p>';
+                    } else {
+                        container.innerHTML = '<p style="color:#888;">AI分析暂时不可用</p>';
+                    }
+                })
+                .catch(() => {
+                    container.innerHTML = '<p style="color:#888;">AI分析暂时不可用</p>';
+                });
+        }
+    </script>
+</body>
+</html>

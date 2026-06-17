@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('借阅记录')"></head>
+<body>
+    <nav th:replace="fragments/layout :: navbar"></nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>📋 借阅记录</h1>
+            </div>
+
+            <div class="table-container" th:if="${borrows != null and !borrows.isEmpty()}">
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>读者</th><th>图书</th><th>借阅时间</th>
+                            <th>应还时间</th><th>归还时间</th><th>状态</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="b : ${borrows}">
+                            <td th:text="${b.id}">1</td>
+                            <td th:text="${b.userRealName} + '(' + ${b.username} + ')'">读者</td>
+                            <td th:text="${b.bookTitle}">图书</td>
+                            <td th:text="${#temporals.format(b.borrowTime, 'yyyy-MM-dd HH:mm')}">借阅</td>
+                            <td th:text="${#temporals.format(b.dueTime, 'yyyy-MM-dd')}">应还</td>
+                            <td th:text="${b.returnTime != null ? #temporals.format(b.returnTime, 'yyyy-MM-dd HH:mm') : '-'}">归还</td>
+                            <td>
+                                <span th:if="${b.returnTime != null}" class="tag">已归还</span>
+                                <span th:if="${b.returnTime == null and b.status == 1}" class="tag tag-success">借阅中</span>
+                                <span th:if="${b.returnTime == null and b.status == 2}" class="tag tag-danger">逾期</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/layout :: chatbot"></div>
+    <footer th:replace="fragments/layout :: footer"></footer>
+</body>
+</html>

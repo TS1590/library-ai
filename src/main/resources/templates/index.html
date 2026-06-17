@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('首页')"></head>
+<body>
+    <nav th:replace="fragments/layout :: navbar"></nav>
+
+    <div class="main-content">
+        <div class="container">
+            <!-- 欢迎信息 -->
+            <div th:if="${session.loginUser != null}" class="alert alert-info">
+                欢迎回来，<strong th:text="${session.loginUser.realName} ?: ${session.loginUser.username}"></strong>！
+                当前借阅 <strong th:text="${borrowingCount}">0</strong> 本图书。
+            </div>
+
+            <!-- 搜索栏 -->
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="搜索图书（书名/作者）..."
+                       onkeydown="if(event.key==='Enter') searchBooks()">
+                <button class="btn btn-primary" onclick="searchBooks()">🔍 搜索</button>
+            </div>
+
+            <!-- AI推荐区 -->
+            <div th:if="${aiRecommendations != null and !aiRecommendations.isEmpty()}" class="ai-section">
+                <h3>🤖 AI为你推荐</h3>
+                <div class="book-grid">
+                    <div th:each="rec : ${aiRecommendations}" class="book-card">
+                        <div class="book-cover">
+                                <img th:if="${rec.bookCoverUrl}" th:src="${rec.bookCoverUrl}" th:alt="${rec.bookTitle}">
+                                <span th:unless="${rec.bookCoverUrl}">📖</span>
+                            </div>
+                        <div class="book-info">
+                            <h3>
+                                <a th:href="@{/book/detail(id=${rec.bookId})}" th:text="${rec.bookTitle}">书名</a>
+                            </h3>
+                            <p class="author" th:text="${rec.bookAuthor}">作者</p>
+                            <p class="ai-reason" th:text="${rec.reason}">推荐理由</p>
+                        </div>
+                    </div>
+                </div>
+                <a href="/ai/recommend" style="margin-top:12px;display:inline-block;">查看更多推荐 →</a>
+            </div>
+
+            <!-- 热门图书 -->
+            <div class="page-header">
+                <h1>🔥 热门图书</h1>
+            </div>
+            <div class="book-grid">
+                <div th:each="book : ${popularBooks}" class="book-card">
+                    <a th:href="@{/book/detail(id=${book.id})}">
+                        <div class="book-cover">
+                                <img th:if="${book.coverUrl}" th:src="${book.coverUrl}" th:alt="${book.title}">
+                                <span th:unless="${book.coverUrl}">📖</span>
+                            </div>
+                        <div class="book-info">
+                            <h3 th:text="${book.title}">书名</h3>
+                            <p class="author" th:text="${book.author}">作者</p>
+                            <div class="meta">
+                                <span th:text="${book.categoryName}">分类</span>
+                                <span th:text="'可借:' + ${book.availableCopies}">可借</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 最新上架 -->
+            <div class="page-header" style="margin-top: 32px;">
+                <h1>🆕 最新上架</h1>
+            </div>
+            <div class="book-grid">
+                <div th:each="book : ${latestBooks}" class="book-card">
+                    <a th:href="@{/book/detail(id=${book.id})}">
+                        <div class="book-cover">
+                                <img th:if="${book.coverUrl}" th:src="${book.coverUrl}" th:alt="${book.title}">
+                                <span th:unless="${book.coverUrl}">📖</span>
+                            </div>
+                        <div class="book-info">
+                            <h3 th:text="${book.title}">书名</h3>
+                            <p class="author" th:text="${book.author}">作者</p>
+                            <div class="meta">
+                                <span th:text="${book.categoryName}">分类</span>
+                                <span th:text="'可借:' + ${book.availableCopies}">可借</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 未登录时的引导 -->
+            <div th:if="${session.loginUser == null}" style="text-align:center;margin-top:40px;padding:40px;background:white;border-radius:12px;">
+                <h2>📚 欢迎使用校园图书管理系统</h2>
+                <p style="color:#888;margin:16px 0;">登录后可使用AI推荐、图书借阅等功能</p>
+                <a href="/login" class="btn btn-primary" style="margin-right:8px;">登录</a>
+                <a href="/register" class="btn btn-outline">注册</a>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/layout :: chatbot"></div>
+    <footer th:replace="fragments/layout :: footer"></footer>
+
+    <script>
+        function searchBooks() {
+            var keyword = document.getElementById('searchInput').value.trim();
+            if (keyword) {
+                window.location.href = '/search?keyword=' + encodeURIComponent(keyword);
+            }
+        }
+    </script>
+</body>
+</html>

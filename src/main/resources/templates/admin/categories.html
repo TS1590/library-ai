@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('分类管理')"></head>
+<body>
+    <nav th:replace="fragments/layout :: navbar"></nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>🏷️ 分类管理</h1>
+            </div>
+
+            <!-- 提示消息 -->
+            <div th:if="${success}" class="alert alert-success" style="padding:12px 16px;background:#d4edda;border:1px solid #c3e6cb;border-radius:6px;margin-bottom:16px;color:#155724;"
+                 th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-danger" style="padding:12px 16px;background:#f8d7da;border:1px solid #f5c6cb;border-radius:6px;margin-bottom:16px;color:#721c24;"
+                 th:text="${error}"></div>
+
+            <!-- 添加分类表单 -->
+            <div style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:20px;margin-bottom:24px;">
+                <h3 style="margin:0 0 16px;font-size:16px;">➕ 添加新分类</h3>
+                <form th:action="@{/admin/category/add}" method="post" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:150px;">
+                        <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">分类名称 <span style="color:red;">*</span></label>
+                        <input type="text" name="name" required maxlength="50" placeholder="如：哲学宗教"
+                               style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:4px;box-sizing:border-box;">
+                    </div>
+                    <div style="flex:2;min-width:200px;">
+                        <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">描述（可选）</label>
+                        <input type="text" name="description" maxlength="255" placeholder="简要描述该分类"
+                               style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:4px;box-sizing:border-box;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="white-space:nowrap;">确认添加</button>
+                </form>
+            </div>
+
+            <!-- 分类列表 -->
+            <div class="table-container" th:if="${categories != null and !categories.isEmpty()}">
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>分类名称</th><th>描述</th><th>操作</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="cat : ${categories}" th:data-id="${cat.id}"
+                            th:data-name="${cat.name}" th:data-desc="${cat.description} ?: ''">
+                            <td th:text="${cat.id}">1</td>
+                            <td>
+                                <span class="cat-view-name" th:text="${cat.name}">分类</span>
+                                <input class="cat-edit-name" type="text" th:value="${cat.name}"
+                                       style="display:none;width:100%;padding:4px 8px;border:1px solid #ddd;border-radius:4px;box-sizing:border-box;">
+                            </td>
+                            <td>
+                                <span class="cat-view-desc" th:text="${cat.description} ?: '（无描述）'">描述</span>
+                                <input class="cat-edit-desc" type="text" th:value="${cat.description}"
+                                       style="display:none;width:100%;padding:4px 8px;border:1px solid #ddd;border-radius:4px;box-sizing:border-box;">
+                            </td>
+                            <td style="white-space:nowrap;">
+                                <span class="cat-btns-view">
+                                    <a href="javascript:void(0)" class="btn btn-sm btn-primary"
+                                       onclick="startEdit(this)">编辑</a>
+                                    <a th:href="@{/admin/category/delete/{id}(id=${cat.id})}" class="btn btn-sm btn-danger"
+                                       onclick="return confirm('确认删除该分类？如果该分类下有图书，将无法显示分类名称。')">删除</a>
+                                </span>
+                                <span class="cat-btns-edit" style="display:none;">
+                                    <a href="javascript:void(0)" class="btn btn-sm btn-success"
+                                       onclick="saveEdit(this)">保存</a>
+                                    <a href="javascript:void(0)" class="btn btn-sm btn-outline"
+                                       onclick="cancelEdit(this)">取消</a>
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div th:unless="${categories != null and !categories.isEmpty()}" style="text-align:center;padding:60px;color:#888;">
+                📭 暂无分类，请添加
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/layout :: chatbot"></div>
+    <footer th:replace="fragments/layout :: footer"></footer>
+
+    <script>
+        // 从按钮所在的 <tr> 找到对应元素
+        function getRow(el) {
+            return el.closest('tr');
+        }
+
+        function startEdit(btn) {
+            var row = getRow(btn);
+            row.querySelector('.cat-view-name').style.display = 'none';
+            row.querySelector('.cat-edit-name').style.display = 'inline-block';
+            row.querySelector('.cat-view-desc').style.display = 'none';
+            row.querySelector('.cat-edit-desc').style.display = 'inline-block';
+            row.querySelector('.cat-btns-view').style.display = 'none';
+            row.querySelector('.cat-btns-edit').style.display = 'inline';
+        }
+
+        function cancelEdit(btn) {
+            var row = getRow(btn);
+            // 恢复原始值
+            row.querySelector('.cat-edit-name').value = row.getAttribute('data-name');
+            row.querySelector('.cat-edit-desc').value = row.getAttribute('data-desc');
+            // 切换显示
+            row.querySelector('.cat-view-name').style.display = 'inline';
+            row.querySelector('.cat-edit-name').style.display = 'none';
+            row.querySelector('.cat-view-desc').style.display = 'inline';
+            row.querySelector('.cat-edit-desc').style.display = 'none';
+            row.querySelector('.cat-btns-view').style.display = 'inline';
+            row.querySelector('.cat-btns-edit').style.display = 'none';
+        }
+
+        function saveEdit(btn) {
+            var row = getRow(btn);
+            var id = row.getAttribute('data-id');
+            var name = row.querySelector('.cat-edit-name').value.trim();
+            if (!name) { alert('分类名称不能为空'); return; }
+            var desc = row.querySelector('.cat-edit-desc').value.trim();
+
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/admin/category/edit/' + id;
+            form.style.display = 'none';
+
+            var i1 = document.createElement('input');
+            i1.type = 'hidden'; i1.name = 'name'; i1.value = name;
+            form.appendChild(i1);
+
+            var i2 = document.createElement('input');
+            i2.type = 'hidden'; i2.name = 'description'; i2.value = desc;
+            form.appendChild(i2);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
+</body>
+</html>

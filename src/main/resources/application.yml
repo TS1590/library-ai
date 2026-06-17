@@ -1,0 +1,50 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/library_ai?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+
+  # Thymeleaf 配置
+  thymeleaf:
+    cache: false          # 开发阶段关闭缓存
+    encoding: UTF-8
+    mode: HTML
+    prefix: classpath:/templates/
+    suffix: .html
+
+  # 文件上传大小限制
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 打印SQL日志
+    map-underscore-to-camel-case: true                      # 驼峰映射
+  type-aliases-package: com.example.library.entity
+
+# AI 智能体配置（阿里云百炼 - 兼容OpenAI格式）
+ai:
+  deepseek:
+    api-key: ${DEEPSEEK_API_KEY:your-api-key-here}
+    base-url: https://dashscope.aliyuncs.com/compatible-mode
+    model: qwen-plus          # 通义千问Plus，性价比高
+    max-tokens: 2048
+    temperature: 0.7
+  # AI 功能开关（答辩时可随时关闭）
+  enabled: true
+
+# 自定义应用配置
+app:
+  upload:
+    dir: ./upload/covers/          # 封面图片保存的本地目录
+    url-prefix: /upload/covers/    # 封面图片访问URL前缀（需与 WebConfig 静态资源映射一致）

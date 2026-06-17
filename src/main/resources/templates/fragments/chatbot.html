@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- AI聊天机器人 - 悬浮组件（JS必须在fragment内部才能被Thymeleaf一起引入） -->
+    <div th:fragment="chatbot-widget" id="chatbot-container">
+        <!-- 悬浮按钮 -->
+        <button id="chatbot-toggle" class="chatbot-toggle" title="AI智能助手"
+                onclick="toggleChatWindow()">🤖</button>
+
+        <!-- 聊天窗口 -->
+        <div id="chatbot-window" class="chatbot-window" style="display:none;">
+            <div class="chatbot-header">
+                <span>🤖 图书馆AI助手 - 小书虫</span>
+                <div class="chatbot-header-actions">
+                    <button onclick="clearChatSession()" title="新建对话">🔄</button>
+                    <button onclick="toggleChatWindow()" title="关闭">✕</button>
+                </div>
+            </div>
+            <div class="chatbot-messages" id="chatbot-messages">
+                <div class="chat-message assistant">
+                    <div class="chat-avatar">🤖</div>
+                    <div class="chat-bubble">
+                        你好！我是图书馆智能助手"小书虫"🐛<br>
+                        可以帮你查找图书、推荐书籍、解答借阅问题~
+                    </div>
+                </div>
+            </div>
+            <div class="chatbot-input-area">
+                <input type="text" id="chatbot-input" placeholder="输入你的问题..."
+                       autocomplete="off" maxlength="500"
+                       onkeydown="if(event.key==='Enter'){sendChatMessage()}">
+                <button id="chatbot-send" onclick="sendChatMessage()">发送</button>
+            </div>
+        </div>
+
+        <script>
+            // ===== AI聊天机器人脚本 =====
+            var _chatSessionId = null;
+            var _chatProcessing = false;
+
+            function toggleChatWindow() {
+                var win = document.getElementById('chatbot-window');
+                var input = document.getElementById('chatbot-input');
+                if (win.style.display === 'none' || win.style.display === '') {
+                    win.style.display = 'flex';
+                    if (input) input.focus();
+                    scrollChatToBottom();
+                } else {
+                    win.style.display = 'none';
+                }
+            }
+
+            function clearChatSession() {
+                if (_chatSessionId) {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/ai/chat/clear', true);
+                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    xhr.send('sessionId=' + encodeURIComponent(_chatSessionId));
+                }
+                _chatSessionId = null;
+                document.getElementById('chatbot-messages').innerHTML =
+                    '<div class="chat-message assistant"><div class="chat-avatar">🤖</div>' +
+                    '<div class="chat-bubble">对话已重置，有什么想问的吗？</div></div>';
+            }
+
+            function sendChatMessage() {
+                if (_chatProcessing) return;
+                var input = document.getElementById('chatbot-input');
+                var sendBtn = document.getElementById('chatbot-send');
+                var message = input.value.trim();
+                if (!message) return;
+
+                _chatProcessing = true;
+                sendBtn.disabled = true;
+                input.disabled = true;
+
+                appendChatMsg('user', message);
+                input.value = '';
+
+                var aiEl = appendChatMsg('assistant', '思考中...');
+
+                // 构建请求体
+                var body = 'message=' + encodeURIComponent(message);
+                if (_chatSessionId) body += '&sessionId=' + encodeURIComponent(_chatSessionId);
+
+                // 发送POST请求
+                fetch('/ai/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        _chatSessionId = data.sessionId;
+                        aiEl.querySelector('.chat-bubble').textContent = data.reply;
+                    } else {
+                        aiEl.querySelector('.chat-bubble').textContent =
+                            '⚠️ ' + (data.message || 'AI服务暂时不可用');
+                    }
+                    resetChatInput();
+                })
+                .catch(function(err) {
+                    console.error('AI聊天请求失败:', err);
+                    aiEl.querySelector('.chat-bubble').textContent =
+                        '⚠️ 网络连接失败，请检查网络后重试';
+                    resetChatInput();
+                });
+            }
+
+            function appendChatMsg(role, content) {
+                var msgEl = document.getElementById('chatbot-messages');
+                var div = document.createElement('div');
+                div.className = 'chat-message ' + role;
+                div.innerHTML = '<div class="chat-avatar">' + (role === 'user' ? '👤' : '🤖') +
+                    '</div><div class="chat-bubble">' + content + '</div>';
+                msgEl.appendChild(div);
+                scrollChatToBottom();
+                return div;
+            }
+
+            function scrollChatToBottom() {
+                var msgEl = document.getElementById('chatbot-messages');
+                msgEl.scrollTop = msgEl.scrollHeight;
+            }
+
+            function resetChatInput() {
+                _chatProcessing = false;
+                var sendBtn = document.getElementById('chatbot-send');
+                var input = document.getElementById('chatbot-input');
+                if (sendBtn) sendBtn.disabled = false;
+                if (input) { input.disabled = false; input.focus(); }
+            }
+        </script>
+    </div>
+</body>
+</html>

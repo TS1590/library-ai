@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('AI智能推荐')"></head>
+<body>
+    <nav th:replace="fragments/layout :: navbar"></nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>🤖 AI智能推荐</h1>
+                <p style="color:#888;">基于你的借阅历史和阅读偏好，AI为你精心推荐</p>
+            </div>
+
+            <!-- AI功能未开启 -->
+            <div th:if="${aiDisabled}" style="text-align:center;padding:60px;">
+                <div style="font-size:4rem;">🤖</div>
+                <h2>AI服务暂未开启</h2>
+                <p style="color:#888;">请联系管理员开启AI智能推荐功能</p>
+            </div>
+
+            <!-- 推荐错误 -->
+            <div th:if="${recommendError}" class="alert alert-info" th:text="${recommendError}"></div>
+
+            <!-- 推荐列表 -->
+            <div th:if="${recommendations != null and !recommendations.isEmpty()}">
+                <div class="book-grid">
+                    <div th:each="rec : ${recommendations}" class="book-card">
+                        <a th:href="@{/book/detail(id=${rec.bookId})}">
+                            <div class="book-cover">
+                                <img th:if="${rec.bookCoverUrl}" th:src="${rec.bookCoverUrl}" th:alt="${rec.bookTitle}">
+                                <span th:unless="${rec.bookCoverUrl}">📖</span>
+                            </div>
+                            <div class="book-info">
+                                <h3 th:text="${rec.bookTitle}">书名</h3>
+                                <p class="author" th:text="${rec.bookAuthor}">作者</p>
+                                <div style="margin-top:4px;">
+                                    <span class="tag" th:text="'⭐ ' + ${#numbers.formatDecimal(rec.score, 1, 1)}">评分</span>
+                                </div>
+                                <p class="ai-reason" style="margin-top:8px;" th:text="${rec.reason}">推荐理由</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div style="text-align:center;margin-top:20px;">
+                    <button class="btn btn-primary" onclick="location.reload()">
+                        🔄 换一批推荐
+                    </button>
+                </div>
+            </div>
+
+            <!-- 无推荐 -->
+            <div th:if="${recommendations == null or recommendations.isEmpty()}" style="text-align:center;padding:60px;">
+                <div style="font-size:4rem;">📚</div>
+                <h2>借阅更多图书，获取个性化推荐</h2>
+                <p style="color:#888;">AI会根据你的阅读喜好为你推荐好书</p>
+                <a href="/books" class="btn btn-primary" style="margin-top:16px;">去浏览图书</a>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/layout :: chatbot"></div>
+    <footer th:replace="fragments/layout :: footer"></footer>
+</body>
+</html>

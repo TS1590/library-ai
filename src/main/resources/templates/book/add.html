@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('添加图书')"></head>
+<body>
+    <nav th:replace="fragments/layout :: navbar"></nav>
+
+    <div class="main-content">
+        <div class="container" style="max-width:600px;">
+            <div class="page-header">
+                <h1>📖 添加图书</h1>
+            </div>
+
+            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+            <form action="/book/doAdd" method="post" enctype="multipart/form-data" class="card">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>书名 *</label>
+                        <input type="text" name="title" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>作者 *</label>
+                        <input type="text" name="author" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ISBN</label>
+                        <input type="text" name="isbn" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>出版社</label>
+                        <input type="text" name="publisher" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>分类</label>
+                        <select name="categoryId" class="form-control">
+                            <option value="">-- 请选择分类 --</option>
+                            <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                        </select>
+                    </div>
+                    <!-- 封面图片上传 -->
+                    <div class="form-group">
+                        <label>封面图片</label>
+                        <div class="cover-upload">
+                            <div class="cover-preview" id="coverPreview">
+                                <div class="placeholder">
+                                    <span class="icon">📷</span>
+                                    <span>预览封面</span>
+                                </div>
+                            </div>
+                            <div class="cover-file-input">
+                                <input type="file" name="coverImage" accept="image/*"
+                                       onchange="previewCover(this)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>总册数 *</label>
+                        <input type="number" name="totalCopies" class="form-control" value="1" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>馆藏位置</label>
+                        <input type="text" name="location" class="form-control" placeholder="如: A区-01-01">
+                    </div>
+                    <div class="form-group">
+                        <label>图书简介</label>
+                        <textarea name="description" class="form-control" rows="4" placeholder="图书内容简介..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;">确认添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:replace="fragments/layout :: chatbot"></div>
+    <footer th:replace="fragments/layout :: footer"></footer>
+
+    <script>
+        function previewCover(input) {
+            var preview = document.getElementById('coverPreview');
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = '<img src="' + e.target.result + '" alt="封面预览">';
+                    preview.classList.add('has-image');
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.innerHTML = '<div class="placeholder"><span class="icon">📷</span><span>预览封面</span></div>';
+                preview.classList.remove('has-image');
+            }
+        }
+    </script>
+</body>
+</html>

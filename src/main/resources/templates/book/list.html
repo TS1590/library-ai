@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('图书浏览')"></head>
+<body>
+    <nav th:replace="fragments/layout :: navbar"></nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 th:text="${keyword != null ? '搜索结果: ' + keyword : '全部图书'}">全部图书</h1>
+            </div>
+
+            <!-- 搜索栏 -->
+            <div class="search-bar">
+                <input type="text" id="searchInput" th:value="${keyword}"
+                       placeholder="搜索图书（书名/作者）..."
+                       onkeydown="if(event.key==='Enter') searchBooks()">
+                <button class="btn btn-primary" onclick="searchBooks()">🔍 搜索</button>
+            </div>
+
+            <!-- 图书列表 -->
+            <div th:if="${books != null and !books.isEmpty()}">
+                <div class="book-grid">
+                    <div th:each="book : ${books}" class="book-card">
+                        <a th:href="@{/book/detail(id=${book.id})}">
+                            <div class="book-cover">
+                                <img th:if="${book.coverUrl}" th:src="${book.coverUrl}" th:alt="${book.title}">
+                                <span th:unless="${book.coverUrl}">📖</span>
+                            </div>
+                            <div class="book-info">
+                                <h3 th:text="${book.title}">书名</h3>
+                                <p class="author" th:text="${book.author}">作者</p>
+                                <div class="meta">
+                                    <span th:text="${book.categoryName}">分类</span>
+                                    <span th:class="${book.availableCopies > 0} ? 'tag' : 'tag tag-danger'"
+                                          th:text="${book.availableCopies > 0} ? '可借' : '已借完'"></span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${books == null or books.isEmpty()}" style="text-align:center;padding:60px 20px;">
+                <p style="font-size:1.2rem;color:#888;">📭 未找到相关图书</p>
+                <a href="/books" class="btn btn-primary" style="margin-top:12px;">查看全部图书</a>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/layout :: chatbot"></div>
+    <footer th:replace="fragments/layout :: footer"></footer>
+
+    <script>
+        function searchBooks() {
+            var keyword = document.getElementById('searchInput').value.trim();
+            if (keyword) {
+                window.location.href = '/search?keyword=' + encodeURIComponent(keyword);
+            } else {
+                window.location.href = '/books';
+            }
+        }
+    </script>
+</body>
+</html>
